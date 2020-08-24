@@ -60,7 +60,7 @@ Resources:
     DependsOn: 
     - VPC
     - IAMPolicy
-    Properties: 
+    Properties:
       GroupDescription: "inoue handson sample"
       GroupName: "inoue-ap-sg"
       SecurityGroupEgress: 
@@ -90,7 +90,7 @@ Resources:
   EC2:
     Type: AWS::EC2::Instance
     DependsOn: SecurityGroup
-    Properties: 
+    Properties:
       AvailabilityZone: us-west-2a
       InstanceType: "t2.micro"
       KeyName: inoue
@@ -101,30 +101,52 @@ Resources:
       Tags:
       - Key: Name
         Value: inoue-ap
-      UserData: "IyEvYmluL2Jhc2gKeXVtIHVwZGF0ZSAteQp5dW0gaW5zdGFsbCBodHRwZCAteQpzZXJ2aWNlIGh0dHBkIHN0YXJ0CmNoa2NvbmZpZyBodHRwZCBvbgo="
+      UserData: "IyEvYmluL2Jhc2gKCmF3cyBzMyBjcCBzMzovL2lub3VlLWFydGlmYWN0cy9oZWxsby1zZXJ2ZXIudGd6IC4vCnRhciB6eHZmIGhlbGxvLXNlcnZlci50Z3oKbXYgaGVsbG8tc2VydmVyIC91c3IvbG9jYWwvYmluLwptdiBoZWxsby1zZXJ2ZXIuc2VydmljZSAvZXRjL3N5c3RlbWQvc3lzdGVtLwoKc3lzdGVtY3RsIGRhZW1vbi1yZWxvYWQKc3lzdGVtY3RsIGVuYWJsZSBoZWxsby1zZXJ2ZXIuc2VydmljZQpzeXN0ZW1jdGwgc3RhcnQgaGVsbG8tc2VydmVyLnNlcnZpY2UK"
       IamInstanceProfile: 
-        Name: AccessS3bucket
+        Name: !Ref InstanceProfile
+  IAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: inoue-bucket-access-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: inoue-instance-profile
+      Roles:
+      - !Ref IAMRole
   IAMPolicy:
     Type: 'AWS::IAM::Policy'
+    DependsOn:
+    - S3
+    - IAMRole
     Properties:
       PolicyName: AccessS3bucket
-      DependsOn: S3
       PolicyDocument:
         Version: 2012-10-17
         Statement:
           - Effect: Allow
             Action:
               - 's3:ListBucket'
-            Resource: 'arn:aws:s3:::inoue--artifacts'
+            Resource: 'arn:aws:s3:::inoue-artifacts'
           - Effect: Allow
             Action:
               - 's3:PutObject'
               - 's3:GetObject'
               - 's3:DeleteObject'
-            Resource: 'arn:aws:s3:::inoue--artifacts/*'
-      # Groups:
-      #   - !Ref CFNUserGroup
+            Resource: 'arn:aws:s3:::inoue-artifacts/*'
+      Roles:
+        - !Ref IAMRole
   S3:
     Type: AWS::S3::Bucket
-    Properties: 
-      BucketName: inoue--artifacts
+    DeletionPolicy: Retain
+    Properties:
+      BucketName: inoue-artifacts
