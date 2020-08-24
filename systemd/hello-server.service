@@ -1,0 +1,11 @@
+[Unit]
+Description=hello-server
+
+[Service]
+ExecStart=/usr/local/bin/hello-server
+User=root
+Group=root
+Environment="PORT=80"
+
+[Install]
+WantedBy=multi-user.target

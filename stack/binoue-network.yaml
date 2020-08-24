@@ -1,4 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  Ec2ImageId:
+    Type: AWS::SSM::Parameter::Value<String>
+    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
 Resources:
   VPC:
     Type: AWS::EC2::VPC
@@ -53,7 +57,9 @@ Resources:
       RouteTableId: !Ref FrontendRouteTable
   SecurityGroup:
     Type: AWS::EC2::SecurityGroup
-    DependsOn: VPC
+    DependsOn: 
+    - VPC
+    - IAMPolicy
     Properties: 
       GroupDescription: "inoue handson sample"
       GroupName: "inoue-ap-sg"
@@ -88,7 +94,7 @@ Resources:
       AvailabilityZone: us-west-2a
       InstanceType: "t2.micro"
       KeyName: inoue
-      ImageId: ami-0873b46c45c11058d
+      ImageId: !Ref Ec2ImageId
       SecurityGroupIds: 
       - !Ref SecurityGroup
       SubnetId: !Ref FrontendSubnet
@@ -96,3 +102,29 @@ Resources:
       - Key: Name
         Value: inoue-ap
       UserData: "IyEvYmluL2Jhc2gKeXVtIHVwZGF0ZSAteQp5dW0gaW5zdGFsbCBodHRwZCAteQpzZXJ2aWNlIGh0dHBkIHN0YXJ0CmNoa2NvbmZpZyBodHRwZCBvbgo="
+      IamInstanceProfile: 
+        Name: AccessS3bucket
+  IAMPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyName: AccessS3bucket
+      DependsOn: S3
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:ListBucket'
+            Resource: 'arn:aws:s3:::inoue--artifacts'
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:DeleteObject'
+            Resource: 'arn:aws:s3:::inoue--artifacts/*'
+      # Groups:
+      #   - !Ref CFNUserGroup
+  S3:
+    Type: AWS::S3::Bucket
+    Properties: 
+      BucketName: inoue--artifacts
