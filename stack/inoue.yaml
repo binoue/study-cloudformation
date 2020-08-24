@@ -101,7 +101,16 @@ Resources:
       Tags:
       - Key: Name
         Value: inoue-ap
-      UserData: "IyEvYmluL2Jhc2gKCmF3cyBzMyBjcCBzMzovL2lub3VlLWFydGlmYWN0cy9oZWxsby1zZXJ2ZXIudGd6IC4vCnRhciB6eHZmIGhlbGxvLXNlcnZlci50Z3oKbXYgaGVsbG8tc2VydmVyIC91c3IvbG9jYWwvYmluLwptdiBoZWxsby1zZXJ2ZXIuc2VydmljZSAvZXRjL3N5c3RlbWQvc3lzdGVtLwoKc3lzdGVtY3RsIGRhZW1vbi1yZWxvYWQKc3lzdGVtY3RsIGVuYWJsZSBoZWxsby1zZXJ2ZXIuc2VydmljZQpzeXN0ZW1jdGwgc3RhcnQgaGVsbG8tc2VydmVyLnNlcnZpY2UK"
+      UserData:
+         Fn::Base64: !Sub |
+          #!/bin/bash
+          aws s3 cp s3://inoue-artifacts/hello-server.tgz ./
+          tar zxvf hello-server.tgz
+          mv hello-server /usr/local/bin/
+          mv hello-server.service /etc/systemd/system/
+          systemctl daemon-reload
+          systemctl enable hello-server.service
+          systemctl start hello-server.service
       IamInstanceProfile: !Ref InstanceProfile
   IAMRole:
     Type: AWS::IAM::Role
