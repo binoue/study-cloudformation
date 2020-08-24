@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Resources:
+  IAMRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      RoleName: inoue-bucket-access-role
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+              - ec2.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+  InstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties: 
+      InstanceProfileName: inoue-instance-profile
+      Roles: 
+      - !Ref IAMRole
+  IAMPolicy:
+    Type: 'AWS::IAM::Policy'
+    DependsOn:
+    - S3
+    - IAMRole
+    Properties:
+      PolicyName: AccessS3bucket
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:ListBucket'
+            Resource: 'arn:aws:s3:::inoue-artifacts'
+          - Effect: Allow
+            Action:
+              - 's3:PutObject'
+              - 's3:GetObject'
+              - 's3:DeleteObject'
+            Resource: 'arn:aws:s3:::inoue-artifacts/*'
+      Roles:
+        - !Ref IAMRole
+  S3:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    Properties: 
+      BucketName: inoue-artifacts
